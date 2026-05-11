@@ -9,28 +9,20 @@ if (file_exists($dbPath)) {
 
 $pdo = db();
 $pdo->exec(file_get_contents(__DIR__ . '/schema.sql'));
+run_migrations($pdo);
 
 $pdo->exec("
     INSERT INTO staff (email, name) VALUES
         ('freddy@folio.example', 'Freddy Folio')
 ");
 
-$stmt = $pdo->prepare('
-    INSERT INTO documents (title, body, created_by)
-    VALUES (?, ?, 1)
-');
-$stmt->execute([
+$doc = create_document(
     'Welcome Packet',
     "Welcome to Folio!\n\nThis is the body of your welcome packet.",
-]);
-$docId = (int) $pdo->lastInsertId();
+    1
+);
 
-$token = random_token();
-$stmt = $pdo->prepare('
-    INSERT INTO shares (document_id, token, recipient_email)
-    VALUES (?, ?, ?)
-');
-$stmt->execute([$docId, $token, 'recipient@example.com']);
+$token = create_share($doc, 'recipient@example.com');
 
 echo "Seeded db.sqlite.\n";
 echo "Admin:        http://localhost:8000/admin.php\n";
