@@ -7,7 +7,7 @@ function render_header(string $title, ?array $staff = null): void {
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title><?= h($title) ?> · Folio</title>
+    <title><?= h($title) ?> - Folio</title>
     <link rel="stylesheet" href="/assets/style.css">
 </head>
 <body>
@@ -18,7 +18,7 @@ function render_header(string $title, ?array $staff = null): void {
             Folio
         </a>
         <?php if ($staff): ?>
-            <span class="nav-user"><strong><?= h($staff['name']) ?></strong> · <?= h($staff['email']) ?></span>
+            <span class="nav-user"><strong><?= h($staff['name']) ?></strong> &middot; <?= h($staff['email']) ?></span>
         <?php endif ?>
     </div>
 </nav>

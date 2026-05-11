@@ -4,17 +4,15 @@ require __DIR__ . '/../lib/bootstrap.php';
 require __DIR__ . '/../lib/layout.php';
 
 $staff = current_staff();
-$docId = (int) ($_GET['doc'] ?? 0);
-$stmt = db()->prepare('SELECT * FROM documents WHERE id = ?');
-$stmt->execute([$docId]);
-$doc = $stmt->fetch();
+$docRef = (string) ($_GET['doc'] ?? '');
+$doc = find_document_by_reference($docRef);
 
 if (!$doc) {
     http_response_code(404);
     render_header('Not found', $staff);
     ?>
     <div class="banner banner-error">Document not found.</div>
-    <p><a href="/admin.php" class="back-link">← back to admin</a></p>
+    <p><a href="/admin.php" class="back-link">&larr; back to admin</a></p>
     <?php
     render_footer();
     exit;
@@ -28,31 +26,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($email === '') {
         $error = 'Recipient email is required.';
     } else {
-        $token = random_token();
-        $stmt = db()->prepare('
-            INSERT INTO shares (document_id, token, recipient_email)
-            VALUES (?, ?, ?)
-        ');
-        $stmt->execute([$doc['id'], $token, $email]);
-        $shareId = (int) db()->lastInsertId();
-        audit_log('create', 'share', $shareId, [
-            'document_id' => $doc['id'],
-            'recipient_email' => $email,
-        ]);
-        $created_token = $token;
+        $created_token = create_share($doc, $email);
     }
 }
 
-render_header('Share · ' . $doc['title'], $staff);
+render_header('Share - ' . $doc['title'], $staff);
 ?>
 
-<a href="/admin.php" class="back-link">← back to admin</a>
+<a href="/admin.php" class="back-link">&larr; back to admin</a>
 
 <h1 class="page-title">Share "<?= h($doc['title']) ?>"</h1>
-<p class="page-subtitle">Generate a one-time link for a recipient.</p>
+<p class="page-subtitle">Generate a private recipient link for <?= h(document_label($doc)) ?>.</p>
 
 <?php if ($error): ?>
     <div class="banner banner-error"><?= h($error) ?></div>
+<?php endif ?>
+
+<?php if (!is_document_published($doc)): ?>
+    <div class="banner banner-warn">
+        This document is scheduled for <?= h(format_publish_at($doc['publish_at'] ?? null)) ?>.
+        The link can be shared now, but recipients will see a not-yet-available message until then.
+    </div>
 <?php endif ?>
 
 <?php if ($created_token): ?>

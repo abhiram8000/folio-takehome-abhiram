@@ -27,11 +27,24 @@ if (!$doc) {
     exit;
 }
 
+if (!is_document_published($doc)) {
+    http_response_code(403);
+    render_header('Not yet available');
+    ?>
+    <div class="centered-message">
+        <h1>Not yet available</h1>
+        <p>This document is scheduled for <?= h(format_publish_at($doc['publish_at'] ?? null)) ?>.</p>
+    </div>
+    <?php
+    render_footer();
+    exit;
+}
+
 render_header($doc['title']);
 ?>
 
 <h1 class="page-title"><?= h($doc['title']) ?></h1>
-<p class="meta">Shared with <?= h($doc['recipient_email']) ?></p>
+<p class="meta">Shared with <?= h($doc['recipient_email']) ?> &middot; <?= h(document_label($doc)) ?></p>
 
 <pre class="doc-body"><?= h($doc['body']) ?></pre>
 
